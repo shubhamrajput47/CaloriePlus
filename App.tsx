@@ -1,42 +1,35 @@
 /**
- * Sample React Native App
- * https://github.com/facebook/react-native
+ * CaloriePlus – AI-Based Food Nutrition Scanner
+ * MCA Major Project | Production-ready React Native app
  *
- * @format
+ * Entry: Redux Provider + SafeArea + Navigation
  */
+import React from 'react';
+import { StatusBar, useColorScheme } from 'react-native';
+// import  {SafeAreaView}  from 'react-native';
+import { Provider } from 'react-redux';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { store } from '@/store';
+import AppNavigation from '@/navigation';
+import { colors } from '@/theme';
+import LoginScreen from '@/screens/auth/LoginScreen';
 
-import { NewAppScreen } from '@react-native/new-app-screen';
-import { StatusBar, StyleSheet, useColorScheme, View } from 'react-native';
-import {
-  SafeAreaProvider,
-  useSafeAreaInsets,
-} from 'react-native-safe-area-context';
-
-function App() {
-  const isDarkMode = useColorScheme() === 'dark';
-
+function App(): React.JSX.Element {
+  const isDark = useColorScheme() === 'dark';
+console.log('-=-=--shivam 1');
   return (
-    <SafeAreaProvider>
-      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
-      <AppContent />
-    </SafeAreaProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <Provider store={store}>
+        {/* <SafeAreaView> */}
+          <StatusBar
+            barStyle={isDark ? 'light-content' : 'dark-content'}
+            backgroundColor={colors.background}
+          />
+          <AppNavigation />
+        {/* </SafeAreaView> */}
+      </Provider>
+    </GestureHandlerRootView>
   );
 }
-
-function AppContent() {
-  const safeAreaInsets = useSafeAreaInsets();
-
-  return (
-    <View style={styles.container}>
-
-    </View>
-  );
-}
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-});
 
 export default App;
