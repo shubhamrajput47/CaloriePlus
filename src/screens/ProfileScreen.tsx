@@ -30,10 +30,11 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: spacing.lg,
+    padding: spacing.xxl,
+    margin:  spacing.lg,
     backgroundColor: colors.background,
   },
-  card: { marginBottom: spacing.lg },
+  card: { marginBottom: spacing.lg  },
   label: { fontSize: fontSizes.sm, color: colors.textSecondary, marginTop: spacing.sm },
   value: { fontSize: fontSizes.lg, color: colors.text, marginBottom: spacing.xs },
   btn: { marginTop: spacing.lg },

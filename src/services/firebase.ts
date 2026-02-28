@@ -2,7 +2,7 @@
  * Firebase initialization (Auth, Firestore)
  * Uses JS SDK for compatibility without native module linking
  */
-import { initializeApp, getApps, FirebaseApp } from 'firebase/app';
+import { initializeApp, getApps, FirebaseApp } from '@react-native-firebase/app';
 import {
   getAuth,
   Auth,
@@ -11,7 +11,7 @@ import {
   signOut as firebaseSignOut,
   User,
   UserCredential,
-} from 'firebase/auth';
+} from '@react-native-firebase/auth';
 import { env } from '@config/env';
 
 let app: FirebaseApp | null = null;
@@ -35,6 +35,7 @@ export function getFirebaseApp(): FirebaseApp | null {
   });
   return app;
 }
+console.log('-=-=-=---shivasm', app);
 
 export function getFirebaseAuth(): Auth | null {
   if (auth) return auth;

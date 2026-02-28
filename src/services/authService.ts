@@ -7,7 +7,8 @@ import { UserProfile } from '@models/user';
 import { DEFAULT_CALORIE_TARGET } from '@constants';
 import { store } from '@store';
 import { setCredentials, logout as logoutAction } from '@store/slices/authSlice';
-
+import {getAuth,createUserWithEmailAndPassword, updateProfile } from '@react-native-firebase/auth';
+import auth from '@react-native-firebase/auth';
 export interface LoginParams {
   email: string;
   password: string;
@@ -35,59 +36,63 @@ function mapFirebaseUserToProfile(
 export async function login(
   params: LoginParams,
 ): Promise<{ user: UserProfile; token: string }> {
-  const auth = getFirebaseAuth();
-  if (!auth) {
-    // Demo mode: no Firebase, use mock
-    const mockUser: UserProfile = {
-      id: 'demo_user',
-      email: params.email,
-      displayName: 'Demo User',
-      dailyCalorieGoal: DEFAULT_CALORIE_TARGET,
-    };
-    const token = 'demo_token_' + Date.now();
-    await storage.setToken(token);
-    store.dispatch(setCredentials({ user: mockUser, token }));
-    return { user: mockUser, token };
-  }
-  const cred = await fbSignIn(params.email, params.password);
+
+  const cred = await auth().signInWithEmailAndPassword(
+    params.email,
+    params.password
+  );
+
   const idToken = await cred.user.getIdToken();
+
   const user = mapFirebaseUserToProfile(
     cred.user.uid,
     cred.user.email ?? params.email,
     cred.user.displayName ?? undefined,
     cred.user.photoURL ?? undefined,
   );
+
   await storage.setToken(idToken);
   store.dispatch(setCredentials({ user, token: idToken }));
+
   return { user, token: idToken };
 }
-
 export async function register(
   params: RegisterParams,
 ): Promise<{ user: UserProfile; token: string }> {
+  
   const auth = getFirebaseAuth();
-  if (!auth) {
-    const mockUser: UserProfile = {
-      id: 'demo_user_' + Date.now(),
-      email: params.email,
-      displayName: params.displayName ?? 'User',
-      dailyCalorieGoal: DEFAULT_CALORIE_TARGET,
-    };
-    const token = 'demo_token_' + Date.now();
-    await storage.setToken(token);
-    store.dispatch(setCredentials({ user: mockUser, token }));
-    return { user: mockUser, token };
+
+  // 1️⃣ Create user in Firebase
+  const cred = await createUserWithEmailAndPassword(
+    getAuth(),
+    params.email,
+    params.password
+  );
+
+  // 2️⃣ Save displayName in Firebase (VERY IMPORTANT)
+  if (params.displayName) {
+    await updateProfile(cred.user, {
+      displayName: params.displayName,
+    });
   }
-  const cred = await fbRegister(params.email, params.password);
+
+  // 3️⃣ Get ID Token
   const idToken = await cred.user.getIdToken();
+
+  // 4️⃣ Map Firebase user to your app profile
   const user = mapFirebaseUserToProfile(
     cred.user.uid,
     cred.user.email ?? params.email,
     params.displayName ?? cred.user.displayName ?? undefined,
     cred.user.photoURL ?? undefined,
   );
+
+  // 5️⃣ Save token in storage
   await storage.setToken(idToken);
+
+  // 6️⃣ Save user in Redux
   store.dispatch(setCredentials({ user, token: idToken }));
+
   return { user, token: idToken };
 }
 

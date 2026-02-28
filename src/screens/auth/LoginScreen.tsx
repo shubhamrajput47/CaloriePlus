@@ -36,6 +36,8 @@ export default function LoginScreen({
       dispatch(setError(null));
       dispatch(setLoading(true));
       try {
+        console.log('shiv yuyuyuyuyuy');
+        
         await login({ email: values.email, password: values.password });
       } catch (e) {
         dispatch(

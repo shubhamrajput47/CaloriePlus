@@ -39,10 +39,12 @@ export default function RegisterScreen({
       dispatch(setLoading(true));
       try {
         await register({
+          
           email: values.email,
           password: values.password,
           displayName: values.displayName || undefined,
-        });
+        }).then((e) => console.log(e)
+        )
       } catch (e) {
         dispatch(
           setError(e instanceof Error ? e.message : 'Registration failed'),

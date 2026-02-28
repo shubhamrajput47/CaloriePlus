@@ -13,10 +13,28 @@ import { store } from '@/store';
 import AppNavigation from '@/navigation';
 import { colors } from '@/theme';
 import LoginScreen from '@/screens/auth/LoginScreen';
+import auth from '@react-native-firebase/auth';
+import { getApp } from '@react-native-firebase/app';
+import { getApps } from '@react-native-firebase/app';
+
+
+import {
+  getAuth,
+  createUserWithEmailAndPassword,
+} from '@react-native-firebase/auth';
+
+
+
+
+
 
 function App(): React.JSX.Element {
   const isDark = useColorScheme() === 'dark';
-console.log('-=-=--shivam 1');
+   const app = getApp(); // 🔥 New way
+  const auth = getAuth(app);
+
+console.log('-=-=--shivam 1',auth);
+console.log("Firebase Apps:", getApps());
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <Provider store={store}>
