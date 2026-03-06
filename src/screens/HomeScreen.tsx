@@ -59,9 +59,9 @@ const styles = StyleSheet.create({
     fontSize: fontSizes.h3,
     fontWeight: '700',
     color: colors.text,
-    marginBottom: spacing.lg,
+    marginTop: spacing.xl,
   },
-  card: { marginBottom: spacing.lg },
-  actions: { gap: spacing.sm },
-  actionBtn: { marginBottom: spacing.sm },
+  card: { marginTop: spacing.lg },
+  actions: { gap: spacing.xxs},
+  actionBtn: { marginTop: spacing.md },
 });

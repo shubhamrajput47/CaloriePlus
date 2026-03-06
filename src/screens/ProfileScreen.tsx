@@ -7,12 +7,29 @@ import { useAppSelector } from '@store/hooks';
 import { logout } from '@services/authService';
 import { Button, Card } from '@components';
 import { colors, spacing, fontSizes } from '@theme';
+import { useNavigation } from '@react-navigation/native';
+import { getAuth, signOut } from '@react-native-firebase/auth';
+
 
 export default function ProfileScreen() {
+
   const user = useAppSelector((s) => s.auth.user);
-  const handleLogout = async () => {
-    await logout();
-  };
+  const navigation = useNavigation();
+
+    const handleLogout = async () => {
+  try {
+
+  signOut(getAuth()).then(() => 
+    console.log('User signed out!'));
+
+    // navigate to login screen
+    // navigation.replace('Login');
+
+  } catch (error) {
+    console.log("Logout error", error);
+  }
+};
+
 
   return (
     <View style={styles.container}>
@@ -39,3 +56,6 @@ const styles = StyleSheet.create({
   value: { fontSize: fontSizes.lg, color: colors.text, marginBottom: spacing.xs },
   btn: { marginTop: spacing.lg },
 });
+
+
+

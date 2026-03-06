@@ -1,33 +1,59 @@
-/**
- * Scanner - Camera capture for food
- * Uses react-native-vision-camera when permission granted; fallback to upload
- */
-import React, { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
+// import React, { useEffect, useRef, useState, useCallback } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { Camera, useCameraDevices } from 'react-native-vision-camera';
+
 import { useAppDispatch } from '@store/hooks';
 import { setImageUri, setAnalyzing, setScanResult, setError } from '@store/slices/scannerSlice';
-import { analyzeFoodImage, getMockAnalyzedFood } from '@services/nutritionService';
-import { Button } from '@components';
-import { colors, spacing, fontSizes } from '@theme';
+import { analyzeFoodImage } from '@services/nutritionService';
+import { colors } from '@theme';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 export default function ScannerCameraScreen() {
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
-  const [permissionStatus, setPermissionStatus] = useState<string>('unknown');
 
-  const openUpload = useCallback(() => {
-    (navigation as { navigate: (a: string) => void }).navigate('ScannerUpload');
-  }, [navigation]);
+  const devices = useCameraDevices('back');
+  const device = devices;
+  const camera = useRef<Camera>(null);
 
-  const simulateCapture = useCallback(async () => {
-    dispatch(setAnalyzing(true));
-    dispatch(setError(null));
+  const [hasPermission, setHasPermission] = useState(false);
+  const [isViewImage, setViewImage] = useState('')
+
+  // Request Camera Permission
+  useEffect(() => {
+    (async () => {
+      const status = await Camera.requestCameraPermission();
+      console.log("------status",status);
+      
+      setHasPermission(status === 'granted');
+    })();
+  }, []);
+
+  const capturePhoto = useCallback(async () => {
+    console.log("------camera,current",camera.current);
+    
+    if (!camera.current) return;
+
     try {
-      const item = getMockAnalyzedFood('Captured meal');
-      dispatch(setScanResult(item));
-      (navigation as { navigate: (a: string, b: { itemId?: string }) => void }).navigate('ScannerResult', {
-        itemId: item.id,
+      dispatch(setAnalyzing(true));
+      dispatch(setError(null));
+
+      const photo = await camera.current.takePhoto();
+      console.log("------photo",photo);
+      
+      const imagePath = `file://${photo.path}`;
+
+      dispatch(setImageUri(imagePath));
+      setViewImage(imagePath)
+
+      // Call your nutrition API
+      const result = await analyzeFoodImage(imagePath);
+
+      dispatch(setScanResult(result));
+
+      (navigation as any).navigate('ScannerResult', {
+        itemId: result.id,
       });
     } catch (e) {
       dispatch(setError(e instanceof Error ? e.message : 'Scan failed'));
@@ -35,46 +61,47 @@ export default function ScannerCameraScreen() {
       dispatch(setAnalyzing(false));
     }
   }, [dispatch, navigation]);
+ console.log("thisssssss",devices);
+ 
+  if (!device) {
+    return <Text style={{ textAlign: 'center', marginTop: 50 }}>Loading camera...</Text>;
+  }
+
+  if (!hasPermission) {
+    return <Text style={{ textAlign: 'center', marginTop: 50 }}>Camera permission denied</Text>;
+  }
+console.log("------isviewimage",isViewImage);
 
   return (
-    <View style={styles.container}>
-      <View style={styles.placeholder}>
-        <Text style={styles.placeholderText}>
-          Camera view (Vision Camera)
-        </Text>
-        <Text style={styles.hint}>
-          On device: request camera permission and show live preview. Here we simulate.
-        </Text>
-      </View>
-      <View style={styles.actions}>
-        <Button
-          title="Simulate capture & analyze"
-          onPress={simulateCapture}
-          style={styles.btn}
-        />
-        <Button
-          title="Upload image instead"
-          onPress={openUpload}
-          variant="outline"
-          style={styles.btn}
-        />
-      </View>
+    <View style={{ flex: 1 }}>
+      {/* Camera Preview */}
+
+      { isViewImage ? <Image height={100} width={100} source={{uri: isViewImage}} /> :
+      <Camera
+      ref={camera}
+        style={StyleSheet.absoluteFill}
+        device={device[0]}
+        isActive={true}
+         photo={true}
+     
+      />
+}
+      {/* Capture Button */}
+      <TouchableOpacity style={styles.captureBtn} onPress={capturePhoto} />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background, padding: spacing.lg },
-  placeholder: {
-    flex: 1,
-    backgroundColor: colors.border,
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: spacing.lg,
+  captureBtn: {
+    position: 'absolute',
+    bottom: 40,
+    alignSelf: 'center',
+    width: 75,
+    height: 75,
+    borderRadius: 40,
+    backgroundColor: 'white',
+    borderWidth: 4,
+    borderColor: '#ccc',
   },
-  placeholderText: { fontSize: fontSizes.lg, color: colors.textSecondary },
-  hint: { fontSize: fontSizes.sm, color: colors.textSecondary, marginTop: spacing.sm, textAlign: 'center' },
-  actions: { gap: spacing.sm },
-  btn: { marginBottom: spacing.sm },
 });
