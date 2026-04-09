@@ -9,3 +9,5 @@ export {
 export * from './authService';
 export * from './nutritionService';
 export * from './dietService';
+export * from './visionService';
+export * from './clarifaiService';

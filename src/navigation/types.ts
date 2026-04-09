@@ -23,6 +23,7 @@ export type ScannerStackParamList = {
   ScannerCamera: undefined;
   ScannerUpload: undefined;
   ScannerResult: { itemId?: string };
+  FoodRecognitionAndroid: undefined;
 };
 
 export type TrackerStackParamList = {

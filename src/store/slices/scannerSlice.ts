@@ -6,6 +6,8 @@ import { FoodItem } from '@models/nutrition';
 
 export interface ScannerSliceState {
   lastScannedItem: FoodItem | null;
+  recognizedLabels: string[];
+  visionConfidence: number;
   isAnalyzing: boolean;
   error: string | null;
   imageUri: string | null;
@@ -13,6 +15,8 @@ export interface ScannerSliceState {
 
 const initialState: ScannerSliceState = {
   lastScannedItem: null,
+  recognizedLabels: [],
+  visionConfidence: 0,
   isAnalyzing: false,
   error: null,
   imageUri: null,
@@ -35,6 +39,15 @@ const scannerSlice = createSlice({
       state.isAnalyzing = false;
       state.error = null;
     },
+    setVisionResult: (
+      state,
+      action: PayloadAction<{ labels: string[]; confidence: number }>,
+    ) => {
+      state.recognizedLabels = action.payload.labels;
+      state.visionConfidence = action.payload.confidence;
+      state.isAnalyzing = false;
+      state.error = null;
+    },
     setError: (state, action: PayloadAction<string | null>) => {
       state.error = action.payload;
       state.isAnalyzing = false;
@@ -47,6 +60,7 @@ export const {
   setImageUri,
   setAnalyzing,
   setScanResult,
+  setVisionResult,
   setError,
   clearScan,
 } = scannerSlice.actions;

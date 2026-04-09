@@ -1,20 +1,21 @@
-// import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Camera, useCameraDevices } from 'react-native-vision-camera';
 
 import { useAppDispatch } from '@store/hooks';
-import { setImageUri, setAnalyzing, setScanResult, setError } from '@store/slices/scannerSlice';
+import { setImageUri, setAnalyzing, setScanResult, setError, setVisionResult } from '@store/slices/scannerSlice';
 import { analyzeFoodImage } from '@services/nutritionService';
+import { recognizeFoodClarifai, uriToBase64 } from '@services/clarifaiService';
 import { colors } from '@theme';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import ImageResizer from 'react-native-image-resizer';
+
 
 export default function ScannerCameraScreen() {
   const navigation = useNavigation();
   const dispatch = useAppDispatch();
 
-  const devices = useCameraDevices('back');
-  const device = devices;
+  const device = useCameraDevices().find((d) => d.position === 'back');
   const camera = useRef<Camera>(null);
 
   const [hasPermission, setHasPermission] = useState(false);
@@ -24,15 +25,11 @@ export default function ScannerCameraScreen() {
   useEffect(() => {
     (async () => {
       const status = await Camera.requestCameraPermission();
-      console.log("------status",status);
-      
       setHasPermission(status === 'granted');
     })();
   }, []);
 
   const capturePhoto = useCallback(async () => {
-    console.log("------camera,current",camera.current);
-    
     if (!camera.current) return;
 
     try {
@@ -40,15 +37,29 @@ export default function ScannerCameraScreen() {
       dispatch(setError(null));
 
       const photo = await camera.current.takePhoto();
-      console.log("------photo",photo);
-      
       const imagePath = `file://${photo.path}`;
 
       dispatch(setImageUri(imagePath));
       setViewImage(imagePath)
 
-      // Call your nutrition API
-      const result = await analyzeFoodImage(imagePath);
+      // 1. Convert to Base64
+      const photoBase64 = await uriToBase64(imagePath);
+console.log('-=--==---shivam', photoBase64);
+
+      // 2. Perform Clarifai Food Recognition
+      const clarifaiResult = await recognizeFoodClarifai(photoBase64);
+      const labels = clarifaiResult.foodItems.map(item => item.name);
+      
+      dispatch(setVisionResult({ 
+        labels: labels, 
+        confidence: clarifaiResult.foodItems[0]?.confidence || 0 
+      }));
+
+      // 3. Call nutrition API using the recognized food name
+      const result = await analyzeFoodImage({ 
+        imageUri: imagePath, 
+        imageBase64: photoBase64 
+      });
 
       dispatch(setScanResult(result));
 
@@ -56,12 +67,12 @@ export default function ScannerCameraScreen() {
         itemId: result.id,
       });
     } catch (e) {
+      console.error('[CameraScreen] Analysis failed:', e);
       dispatch(setError(e instanceof Error ? e.message : 'Scan failed'));
     } finally {
       dispatch(setAnalyzing(false));
     }
   }, [dispatch, navigation]);
- console.log("thisssssss",devices);
  
   if (!device) {
     return <Text style={{ textAlign: 'center', marginTop: 50 }}>Loading camera...</Text>;
@@ -76,16 +87,15 @@ console.log("------isviewimage",isViewImage);
     <View style={{ flex: 1 }}>
       {/* Camera Preview */}
 
-      { isViewImage ? <Image height={100} width={100} source={{uri: isViewImage}} /> :
+      {/* { isViewImage ? <Image height={100} width={100} source={{uri: isViewImage}} /> : */}
       <Camera
-      ref={camera}
+        ref={camera}
         style={StyleSheet.absoluteFill}
-        device={device[0]}
+        device={device}
         isActive={true}
-         photo={true}
-     
+        photo={true}
       />
-}
+{/* } */}
       {/* Capture Button */}
       <TouchableOpacity style={styles.captureBtn} onPress={capturePhoto} />
     </View>
