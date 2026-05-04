@@ -18,6 +18,7 @@ import {
 import { Camera, useCameraDevice } from 'react-native-vision-camera';
 import ImageResizer from 'react-native-image-resizer';
 import axios from 'axios';
+import RNFetchBlob from 'react-native-blob-util';
 
 const { width, height } = Dimensions.get('screen');
 
@@ -52,27 +53,21 @@ const FoodRecognitionAndroid = () => {
    * 2. Helper: Convert Image URI to Base64 using FileReader
    * Does NOT use react-native-fs
    */
-  const convertUriToBase64 = async (uri: string): Promise<string> => {
-    try {
-      const response = await fetch(uri);
-      const blob = await response.blob();
-      
-      return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          const base64data = reader.result as string;
-          // Extract base64 from data:image/...;base64,XXXXX
-          const base64 = base64data.split(',')[1];
-          resolve(base64);
-        };
-        reader.onerror = (e) => reject(e);
-        reader.readAsDataURL(blob);
-      });
-    } catch (error) {
-      console.error('[Base64] Error:', error);
-      throw new Error('Failed to convert image to base64');
-    }
-  };
+const convertUriToBase64 = async (uri: string): Promise<string> => {
+  try {
+    // remove file:// (important for Android)
+    const path = uri.replace('file://', '');
+
+    const base64 = await RNFetchBlob.fs.readFile(path, 'base64');
+   console.log("=-==-shubham base64",base64);
+   
+    return base64;
+  } catch (error) {
+    console.log('Base64 Error:', error);
+
+    throw error;
+  }
+};
 
   /**
    * 3. Main Action: Capture and Recognize

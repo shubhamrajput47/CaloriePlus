@@ -16,12 +16,15 @@ import LoginScreen from '@/screens/auth/LoginScreen';
 import auth from '@react-native-firebase/auth';
 import { getApp } from '@react-native-firebase/app';
 import { getApps } from '@react-native-firebase/app';
+import firestore, { FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
+
 
 
 import {
   getAuth,
   createUserWithEmailAndPassword,
 } from '@react-native-firebase/auth';
+import { getFirebaseApp } from '@/services';
 
 
 
@@ -32,9 +35,15 @@ function App(): React.JSX.Element {
   const isDark = useColorScheme() === 'dark';
    const app = getApp(); // 🔥 New way
   const auth = getAuth(app);
+  const firebaseApp = app;
+  console.log('-=-=-=-=-firebaseApp',firebaseApp);
+  
+  // if (!firebaseApp) return null;
+  const db = firestore();
+  // return db;
 
-console.log('-=-=--shivam 1',auth);
-console.log("Firebase Apps:", getApps());
+console.log('-=-=--shivam 1',auth)
+console.log("Firebase Apps db:", db);
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <Provider store={store}>

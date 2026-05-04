@@ -41,7 +41,7 @@ const scannerSlice = createSlice({
     },
     setVisionResult: (
       state,
-      action: PayloadAction<{ labels: string[]; confidence: number }>,
+      action: PayloadAction<{ labels: any; confidence: number }>,
     ) => {
       state.recognizedLabels = action.payload.labels;
       state.visionConfidence = action.payload.confidence;

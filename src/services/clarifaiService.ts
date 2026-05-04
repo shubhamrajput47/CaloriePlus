@@ -4,18 +4,22 @@
  */
 import axios from 'axios';
 import ImageResizer from 'react-native-image-resizer';
+import { useState } from 'react';
 
 const CLARIFAI_API_KEY = '4163f27ee0b24505a91e51fbb49e4285';
-const CLARIFAI_MODEL_URL = 'https://api.clarifai.com/v2/models/food-item-recognition/outputs';
-
+// const CLARIFAI_MODEL_URL = 'https://api.clarifai.com/v2/users/btp341wms6v7/apps/main/models/food-item-recognition/outputs';
+const CLARIFAI_MODEL_URL =  "https://vision.googleapis.com/v1/images:annotate?key=AIzaSyBMyQSKbEp1eFvI8ttdEffOLjP0B3OSLzc"
 export interface ClarifaiFoodItem {
   name: string;
   confidence: number;
 }
 
 export interface ClarifaiRecognitionResult {
-  foodItems: ClarifaiFoodItem[];
+  // foodItems: ClarifaiFoodItem[];
+  name: string;
+  nutrition: any;
 }
+
 
 /**
  * Recognize food items in an image using Clarifai Food Model.
@@ -26,21 +30,22 @@ export interface ClarifaiRecognitionResult {
 export async function recognizeFoodClarifai(
   imageBase64: string,
 ): Promise<ClarifaiRecognitionResult> {
-  console.log('[ClarifaiService] Initiating food recognition...');
+  //console.log('[ClarifaiService] Initiating food recognition...');
 
   if (!imageBase64) {
     throw new Error('No image data provided to Clarifai service');
   }
+//console.log('-=-=--=--=-=-=-=dfgdsdsf imageBase64', imageBase64);
 
   try {
     const response = await axios.post(
-      CLARIFAI_MODEL_URL,
+      "https://api.clarifai.com/v2/users/clarifai/apps/main/models/food-item-v1-recognition/versions/dfebc169854e429086aceb8368662641/outputs",
       {
         inputs: [
           {
             data: {
               image: {
-                base64: imageBase64,
+                base64: imageBase64, // 👈 ONLY base64 string (no prefix)
               },
             },
           },
@@ -48,20 +53,24 @@ export async function recognizeFoodClarifai(
       },
       {
         headers: {
-          'Authorization': `Key ${CLARIFAI_API_KEY}`,
+          Authorization: `Key ${CLARIFAI_API_KEY}`,
           'Content-Type': 'application/json',
         },
-        timeout: 15000,
       }
     );
 
-    console.log('[ClarifaiService] API Response received');
+   
+    //console.log('[ClarifaiService] API Response received',response);
+    //console.log("first item fetch",response?.data?.outputs?.[0]?.data?.concepts?.[0]?.name);
+    
 
     const status = response.data.status;
+    //console.log('-=-=-=-response', response);
     if (status.code !== 10000) {
-      console.error('[ClarifaiService] API Error Status:', status);
+     // console.error('[ClarifaiService] API Error Status:', status);
       throw new Error(`Clarifai API Error: ${status.description} (${status.code})`);
     }
+//console.log('-=-=-=-response', response);
 
     const outputs = response.data.outputs;
     if (!outputs || outputs.length === 0) {
@@ -85,9 +94,24 @@ export async function recognizeFoodClarifai(
     if (foodItems.length === 0) {
       throw new Error('No confident food matches found.');
     }
-
-    console.log(`[ClarifaiService] Successfully identified ${foodItems.length} items`);
-    return { foodItems };
+ const usdaRes = await axios.get(
+      "https://api.nal.usda.gov/fdc/v1/foods/search",
+      {
+        params: {
+          query: response?.data?.outputs?.[0]?.data?.concepts?.[0]?.name,
+          api_key: 'as8AhpBE8yIX6Ie3vocr0eqq1Obfd9SUBjR98OyI',
+          limit: 1,
+        },
+      }
+    );
+    console.log("shubham usdaRes=-==-=--",usdaRes?.data?.foods?.[0]?.foodNutrients
+);
+    
+   // console.log(`[ClarifaiService] Successfully identified ${foodItems.length} items`, foodItems);
+    return { 
+      name:response?.data?.outputs?.[0]?.data?.concepts?.[0]?.name,
+      nutrition:usdaRes?.data?.foods?.[0]?.foodNutrients
+    };
 
   } catch (error: any) {
     if (axios.isAxiosError(error)) {
@@ -95,6 +119,8 @@ export async function recognizeFoodClarifai(
       if (status === 429) {
         throw new Error('Rate limit exceeded. Please try again later.');
       }
+      console.log("-=-=-=--shubham",error);
+      
       const message = error.response?.data?.status?.description || error.message;
       console.error('[ClarifaiService] Axios Error:', message);
       throw new Error(`Recognition failed: ${message}`);

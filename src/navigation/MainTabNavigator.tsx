@@ -40,7 +40,7 @@ export default function MainTabNavigator() {
     >
       <Tab.Screen name="Home" component={HomeScreen} options={{ title: 'Home' }} />
       <Tab.Screen name="ScannerTab" component={ScannerNavigator} options={{ title: 'Scan' }} />
-      <Tab.Screen name="TrackerTab" component={TrackerNavigator} options={{ title: 'Tracker' }} />
+      {/* <Tab.Screen name="TrackerTab" component={TrackerNavigator} options={{ title: 'Tracker' }} /> */}
       <Tab.Screen name="DietTab" component={DietNavigator} options={{ title: 'Diet' }} />
       <Tab.Screen name="ProfileTab" component={ProfileScreen} options={{ title: 'Profile' }} />
     </Tab.Navigator>

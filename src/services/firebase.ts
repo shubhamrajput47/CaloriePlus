@@ -3,19 +3,19 @@
  * Uses JS SDK for compatibility without native module linking
  */
 import { initializeApp, getApps, FirebaseApp } from '@react-native-firebase/app';
+import auth, { FirebaseAuthTypes } from '@react-native-firebase/auth';
+import firestore, { FirebaseFirestoreTypes } from '@react-native-firebase/firestore';
+import { env } from '@config/env';
+import { getApp } from '@react-native-firebase/app';
 import {
   getAuth,
-  Auth,
-  signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
-  signOut as firebaseSignOut,
-  User,
-  UserCredential,
 } from '@react-native-firebase/auth';
-import { env } from '@config/env';
+// import { getApps } from '@react-native-firebase/app';
 
 let app: FirebaseApp | null = null;
-let auth: Auth | null = null;
+let authInstance: FirebaseAuthTypes.Module | null = null;
+let db: FirebaseFirestoreTypes.Module | null = null;
 
 export function getFirebaseApp(): FirebaseApp | null {
   if (app) return app;
@@ -37,38 +37,52 @@ export function getFirebaseApp(): FirebaseApp | null {
 }
 console.log('-=-=-=---shivasm', app);
 
-export function getFirebaseAuth(): Auth | null {
-  if (auth) return auth;
+export function getFirebaseAuth(): FirebaseAuthTypes.Module | null {
+  // if (authInstance) return authInstance;
   const firebaseApp = getFirebaseApp();
   if (!firebaseApp) return null;
-  auth = getAuth(firebaseApp);
-  return auth;
+  authInstance = auth();
+  return authInstance;
 }
+
+export function getFirestore(): FirebaseFirestoreTypes.Module | null {
+  // if (db) return db;
+  // const firebaseApp = getFirebaseApp();
+  // console.log('-=-=-=-=-firebaseApp',firebaseApp);
+  
+  // if (!firebaseApp) return null;
+  db = firestore();
+  return db;
+}
+
+export { firestore, FirebaseFirestoreTypes, FirebaseAuthTypes };
 
 export async function signIn(
   email: string,
   password: string,
-): Promise<UserCredential> {
+): Promise<FirebaseAuthTypes.UserCredential> {
   const a = getFirebaseAuth();
   if (!a) throw new Error('Firebase not configured');
-  return signInWithEmailAndPassword(a, email, password);
+  return a.signInWithEmailAndPassword(email, password);
 }
 
 export async function register(
   email: string,
   password: string,
-): Promise<UserCredential> {
+): Promise<FirebaseAuthTypes.UserCredential> {
   const a = getFirebaseAuth();
   if (!a) throw new Error('Firebase not configured');
-  return createUserWithEmailAndPassword(a, email, password);
+  return a.createUserWithEmailAndPassword(email, password);
 }
 
 export async function signOut(): Promise<void> {
   const a = getFirebaseAuth();
-  if (a) await firebaseSignOut(a);
+  if (a) await a.signOut();
 }
 
-export function getCurrentUser(): User | null {
-  const a = getFirebaseAuth();
+export function getCurrentUser(): FirebaseAuthTypes.User | null {
+  const app = getApp(); // 🔥 New way
+    const auth = getAuth(app);
+  const a = auth;
   return a?.currentUser ?? null;
 }
